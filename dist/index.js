@@ -43,7 +43,7 @@ const http2_1 = __importDefault(require("http2"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const app = (0, express_1.default)();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 app.use(express_1.default.json());
 dotenv_1.default.config();
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
@@ -281,6 +281,6 @@ app.post('/saveActivityToken', async (request, response) => {
         response.status(200).json({ success: true });
     }
 });
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 app.use(express.json());
 dotenv.config();
 
@@ -275,6 +275,6 @@ app.post('/saveActivityToken', async (request, response) => {
     }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
