@@ -40,44 +40,30 @@ const express_1 = __importDefault(require("express"));
 const cron_1 = require("cron");
 const admin = __importStar(require("firebase-admin"));
 const http2_1 = __importDefault(require("http2"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const serviceAccount = __importStar(require("../train-b4416-firebase-adminsdk-udrt3-5b5f963a2e.json"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const app = (0, express_1.default)();
 const port = 3000;
 app.use(express_1.default.json());
-const params = {
-    type: serviceAccount.type,
-    projectId: serviceAccount.project_id,
-    privateKeyId: serviceAccount.private_key_id,
-    privateKey: serviceAccount.private_key,
-    clientEmail: serviceAccount.client_email,
-    clientId: serviceAccount.client_id,
-    authUri: serviceAccount.auth_uri,
-    tokenUri: serviceAccount.token_uri,
-    authProviderX509CertUrl: serviceAccount.auth_provider_x509_cert_url,
-    clientC509CertUrl: serviceAccount.client_x509_cert_url
-};
+dotenv_1.default.config();
+const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+const serviceAccountBuffer = Buffer.from(serviceAccountBase64, 'base64');
+const serviceAccount = JSON.parse(serviceAccountBuffer.toString('utf8'));
 admin.initializeApp({
-    credential: admin.credential.cert(params),
+    credential: admin.credential.cert(serviceAccount),
 });
 const db = admin.firestore();
-const PUSH_NOTIFICATION_URL_PROD = "https://api.push.apple.com";
-const PUSH_NOTIFICATION_URL_DEV = "https://api.sandbox.push.apple.com";
-const TEAM_ID = "F39W5LL4SH";
-const KEY_ID = "VQ44P79C2Z";
 function generateJwtToken() {
-    const privateKeyPath = path_1.default.resolve(__dirname, "./AuthKey_F39W5LL4SH.p8");
-    const privateKey = fs_1.default.readFileSync(privateKeyPath, 'utf8');
+    const keyBase64 = process.env.APNS_KEY_BASE64;
+    const privateKey = Buffer.from(keyBase64, 'base64').toString('utf8');
     const token = jsonwebtoken_1.default.sign({
-        iss: TEAM_ID,
+        iss: process.env.TEAM_ID,
         iat: Math.floor(Date.now() / 1000),
     }, privateKey, {
         algorithm: 'ES256',
         header: {
             alg: 'ES256',
-            kid: KEY_ID,
+            kid: process.env.KEY_ID,
         },
     });
     return token;
@@ -148,6 +134,16 @@ function getWaitingTime(waitingTimeSeconds) {
     }
 }
 function sendActivityNotification(url, deviceToken, event, content, trainLineCode, trainStationCode, type) {
+    const trainData = content.data?.[`${trainLineCode}-${trainStationCode}`] ?? null;
+    if (!trainData) {
+        return;
+    }
+    const waitingIntervalTime = getIntervalWaitingTime(trainData, type);
+    const estimatedWaitingTime = getWaitingTime(waitingIntervalTime);
+    const timestamp = Math.floor(Date.now() / 1000);
+    if (waitingIntervalTime <= 0) {
+        return;
+    }
     const authenticationToken = generateJwtToken();
     const client = http2_1.default.connect(url);
     const headers = {
@@ -155,14 +151,10 @@ function sendActivityNotification(url, deviceToken, event, content, trainLineCod
         ':path': `/3/device/${deviceToken}`,
         ':scheme': 'https',
         'authorization': `bearer ${authenticationToken}`,
-        'apns-topic': process.env.APNS_TOPIC_LIVE_ACTIVITY,
+        'apns-topic': process.env.APNS_TOPIC,
         'apns-push-type': 'liveactivity',
         'apns-priority': 10,
     };
-    const trainData = content.data[`${trainLineCode}-${trainStationCode}`];
-    const waitingIntervalTime = getIntervalWaitingTime(trainData, type);
-    const estimatedWaitingTime = getWaitingTime(waitingIntervalTime);
-    const timestamp = Math.floor(Date.now() / 1000);
     const payload = {
         aps: {
             'event': event,
@@ -175,13 +167,13 @@ function sendActivityNotification(url, deviceToken, event, content, trainLineCod
             },
         },
     };
-    console.log(payload);
+    console.log('this is payload', payload, waitingIntervalTime);
     const request = client.request(headers);
     request.on("response", (headers, flags) => {
         const statusCode = headers[':status'];
         console.log('this status', statusCode);
-        if (statusCode !== 200 && url === PUSH_NOTIFICATION_URL_DEV) {
-            sendActivityNotification(PUSH_NOTIFICATION_URL_PROD, deviceToken, event, content, trainLineCode, trainStationCode, type);
+        if (statusCode !== 200 && url === process.env.PUSH_NOTIFICATION_URL_DEV) {
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', deviceToken, event, content, trainLineCode, trainStationCode, type);
         }
     });
     request.setEncoding('utf8');
@@ -228,7 +220,7 @@ app.post('/startLiveActivity', async (request, response) => {
             await batch.commit();
             getScheduleTransport(trainLineCode, trainStationCode)
                 .then((json) => {
-                sendActivityNotification(PUSH_NOTIFICATION_URL_DEV, token, 'start', json, trainLineCode, trainStationCode, type);
+                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'start', json, trainLineCode, trainStationCode, type);
             });
             let cnt = 1;
             const preriodTime = 30;
@@ -251,7 +243,7 @@ app.post('/startLiveActivity', async (request, response) => {
                 else {
                     getScheduleTransport(trainLineCode, trainStationCode)
                         .then((json) => {
-                        sendActivityNotification(PUSH_NOTIFICATION_URL_DEV, token, 'update', json, trainLineCode, trainStationCode, type);
+                        sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', json, trainLineCode, trainStationCode, type);
                     });
                     cnt += 1;
                     if (cnt * preriodTime >= timeStopLiveActivity) {

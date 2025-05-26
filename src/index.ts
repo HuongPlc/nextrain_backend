@@ -2,38 +2,26 @@ import express from 'express';
 import { CronJob } from 'cron';
 import * as admin from 'firebase-admin';
 import http2 from "http2";
-import path from "path";
-import fs from "fs";
 import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
-import * as serviceAccount from '../train-b4416-firebase-adminsdk-udrt3-c0f7d9bc30.json';
 
 const app = express();
 const port = 3000;
 app.use(express.json());
 dotenv.config();
 
-const params = {
-    type: serviceAccount.type,
-    projectId: serviceAccount.project_id,
-    privateKeyId: serviceAccount.private_key_id,
-    privateKey: serviceAccount.private_key,
-    clientEmail: serviceAccount.client_email,
-    clientId: serviceAccount.client_id,
-    authUri: serviceAccount.auth_uri,
-    tokenUri: serviceAccount.token_uri,
-    authProviderX509CertUrl: serviceAccount.auth_provider_x509_cert_url,
-    clientC509CertUrl: serviceAccount.client_x509_cert_url
-  }
+const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+const serviceAccountBuffer = Buffer.from(serviceAccountBase64!, 'base64');
+const serviceAccount = JSON.parse(serviceAccountBuffer.toString('utf8'));
 
-  admin.initializeApp({
-    credential: admin.credential.cert(params),
-  })
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+})
 const db = admin.firestore();
 
 function generateJwtToken() {
-    const privateKeyPath = path.resolve(__dirname, "./AuthKey_F39W5LL4SH.p8");
-    const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    const keyBase64 = process.env.APNS_KEY_BASE64;
+    const privateKey = Buffer.from(keyBase64!, 'base64').toString('utf8');
     const token = jwt.sign(
       {
         iss: process.env.TEAM_ID,
