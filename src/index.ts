@@ -5,11 +5,13 @@ import http2 from "http2";
 import path from "path";
 import fs from "fs";
 import jwt from "jsonwebtoken";
-import * as serviceAccount from '../train-b4416-firebase-adminsdk-udrt3-5b5f963a2e.json';
+import dotenv from 'dotenv';
+import * as serviceAccount from '../train-b4416-firebase-adminsdk-udrt3-c0f7d9bc30.json';
 
 const app = express();
 const port = 3000;
 app.use(express.json());
+dotenv.config();
 
 const params = {
     type: serviceAccount.type,
@@ -29,17 +31,12 @@ const params = {
   })
 const db = admin.firestore();
 
-const PUSH_NOTIFICATION_URL_PROD = "https://api.push.apple.com"
-const PUSH_NOTIFICATION_URL_DEV = "https://api.sandbox.push.apple.com"
-const TEAM_ID = "VQ44P79C2Z"
-const KEY_ID = "F39W5LL4SH"
-
 function generateJwtToken() {
     const privateKeyPath = path.resolve(__dirname, "./AuthKey_F39W5LL4SH.p8");
     const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
     const token = jwt.sign(
       {
-        iss: TEAM_ID,
+        iss: process.env.TEAM_ID,
         iat: Math.floor(Date.now() / 1000),
       },
       privateKey,
@@ -47,7 +44,7 @@ function generateJwtToken() {
         algorithm: 'ES256',
         header: {
           alg: 'ES256',
-          kid: KEY_ID,
+          kid: process.env.KEY_ID,
         },
       }
     );
@@ -148,7 +145,7 @@ function sendActivityNotification(url: string, deviceToken: string, event: strin
         ':path': `/3/device/${deviceToken}`,
         ':scheme': 'https',
         'authorization': `bearer ${authenticationToken}`,
-        'apns-topic': 'com.mind2spirit.nextrain.push-type.liveactivity',
+        'apns-topic': process.env.APNS_TOPIC,
         'apns-push-type': 'liveactivity',
         'apns-priority': 10,
     };
@@ -172,8 +169,8 @@ function sendActivityNotification(url: string, deviceToken: string, event: strin
     request.on("response", (headers, flags) => {
         const statusCode = headers[':status'];
         console.log('this status', statusCode);
-        if (statusCode !== 200 && url === PUSH_NOTIFICATION_URL_DEV) {
-            sendActivityNotification(PUSH_NOTIFICATION_URL_PROD, deviceToken, event, content, trainLineCode, trainStationCode, type);
+        if (statusCode !== 200 && url === process.env.PUSH_NOTIFICATION_URL_DEV) {
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', deviceToken, event, content, trainLineCode, trainStationCode, type);
         }
     });
     request.setEncoding('utf8');
@@ -223,7 +220,7 @@ app.post('/startLiveActivity', async (request, response) => {
 
             getScheduleTransport(trainLineCode, trainStationCode)
             .then((json) => {
-                sendActivityNotification(PUSH_NOTIFICATION_URL_DEV, token, 'start', json, trainLineCode, trainStationCode, type);
+                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'start', json, trainLineCode, trainStationCode, type);
             });
             let cnt = 1;
             const preriodTime = 30;
@@ -247,7 +244,7 @@ app.post('/startLiveActivity', async (request, response) => {
                     } else {
                         getScheduleTransport(trainLineCode, trainStationCode)
                         .then((json) => {
-                            sendActivityNotification(PUSH_NOTIFICATION_URL_DEV, token, 'update', json, trainLineCode, trainStationCode, type);
+                            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', json, trainLineCode, trainStationCode, type);
                         });
                         cnt += 1;
                         if (cnt * preriodTime >= timeStopLiveActivity) {
