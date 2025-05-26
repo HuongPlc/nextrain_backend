@@ -227,7 +227,7 @@ app.post('/startLiveActivity', async (request, response) => {
                         token: doc.data().token,
                         userId: doc.data().userId
                         }));
-                    if (userData[0].trainCode == '') {
+                    if (userData[0]?.trainCode == '') {
                         job.stop();
                     } else {
                         getScheduleTransport(trainLineCode, trainStationCode)
