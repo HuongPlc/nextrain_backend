@@ -42,10 +42,12 @@ const admin = __importStar(require("firebase-admin"));
 const http2_1 = __importDefault(require("http2"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const axios_1 = __importDefault(require("axios"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 app.use(express_1.default.json());
 dotenv_1.default.config();
+const jobDicts = {};
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 const serviceAccountBuffer = Buffer.from(serviceAccountBase64, 'base64');
 const serviceAccount = JSON.parse(serviceAccountBuffer.toString('utf8'));
@@ -69,57 +71,32 @@ function generateJwtToken() {
     return token;
 }
 async function getScheduleTransport(trainLineCode, trainStationCode) {
-    return new Promise((resolve, reject) => {
-        const client = http2_1.default.connect('https://rt.data.gov.hk');
-        const queryParams = new URLSearchParams({
-            line: trainLineCode,
-            sta: trainStationCode,
-        }).toString();
-        const req = client.request({
-            ':method': 'GET',
-            ':path': `/v1/transport/mtr/getSchedule.php?${queryParams}`,
-            'content-type': 'application/json',
-            'accept-encoding': 'gzip',
-            'content-length': 0,
-            'host': 'rt.data.gov.hk'
+    const queryParams = new URLSearchParams({
+        line: trainLineCode,
+        sta: trainStationCode,
+    }).toString();
+    const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?${queryParams}`;
+    try {
+        const response = await axios_1.default.get(url, {
+            headers: {
+                'Accept-Encoding': 'gzip',
+                'Host': 'rt.data.gov.hk'
+            },
         });
-        let data = '';
-        req.setEncoding('utf8');
-        req.on('data', (chunk) => {
-            data += chunk;
-        });
-        req.on('end', () => {
-            try {
-                const json = JSON.parse(data);
-                client.close();
-                resolve(json);
-            }
-            catch (err) {
-                reject(err);
-            }
-        });
-        req.end();
-    });
+        return response.data;
+    }
+    catch (error) {
+        console.error('Request failed:', error);
+        throw error;
+    }
 }
 function getIntervalWaitingTime(trainData, type) {
     const trainInfo = type == 'UP' ? trainData.UP : trainData.DOWN;
-    const arrivalTime = new Date(trainInfo[0].time);
+    const arrivalTime = new Date(trainInfo[0]?.time);
     const currentTime = new Date(trainData.curr_time);
     const waitingTimeMs = arrivalTime.getTime() - currentTime.getTime();
     const waitingTimeSeconds = waitingTimeMs / 1000;
     return waitingTimeSeconds;
-}
-async function updateDatabaseStopLive(userId) {
-    const snapshot = await db
-        .collection("activityTokens")
-        .where("userId", "==", userId)
-        .get();
-    const batch = db.batch();
-    snapshot.docs.forEach(doc => {
-        const docRef = doc.ref;
-        batch.delete(docRef);
-    });
-    await batch.commit();
 }
 function getWaitingTime(waitingTimeSeconds) {
     if (waitingTimeSeconds <= 0) {
@@ -134,7 +111,7 @@ function getWaitingTime(waitingTimeSeconds) {
     }
 }
 function sendActivityNotification(url, deviceToken, event, content, trainLineCode, trainStationCode, type) {
-    const trainData = content.data?.[`${trainLineCode}-${trainStationCode}`] ?? null;
+    const trainData = content?.data?.[`${trainLineCode}-${trainStationCode}`] ?? null;
     if (!trainData) {
         return;
     }
@@ -200,70 +177,58 @@ app.post('/startLiveActivity', async (request, response) => {
         const userData = snapshot.docs.map(doc => ({
             id: doc.id,
             trainCode: doc.data().trainCode,
-            isStartLiveActivity: doc.data().isStartLiveActivity,
             token: doc.data().token,
             userId: doc.data().userId
         }));
         if (snapshot.empty) {
             response.status(200).json({ success: false, message: 'userId not found' });
         }
-        else if (userData[0].trainCode == `${trainLineCode}-${trainStationCode}` && userData[0].isStartLiveActivity) {
+        else if (userData[0]?.trainCode == `${trainLineCode}-${trainStationCode}` && jobDicts[userId]) {
             response.status(200).json({ success: false, message: 'live activity starting' });
         }
         else {
-            const token = userData[0].token;
+            const token = userData[0]?.token;
             const batch = db.batch();
             snapshot.docs.forEach(doc => {
                 const docRef = doc.ref;
-                batch.update(docRef, { trainCode: `${trainLineCode}-${trainStationCode}`, isStartLiveActivity: true });
+                batch.update(docRef, { trainCode: `${trainLineCode}-${trainStationCode}` });
             });
             await batch.commit();
-            getScheduleTransport(trainLineCode, trainStationCode)
-                .then((json) => {
-                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'start', json, trainLineCode, trainStationCode, type);
-            });
+            removeJob(userId);
+            const data = await getScheduleTransport(trainLineCode, trainStationCode);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', data, trainLineCode, trainStationCode, type);
             let cnt = 1;
             const preriodTime = 30;
             const timeStopLiveActivity = 15 * 60;
             const job = new cron_1.CronJob('*/30 * * * * *', async function () {
-                const snapshot = await db
-                    .collection("activityTokens")
-                    .where("userId", "==", userId)
-                    .get();
-                const userData = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    trainCode: doc.data().trainCode,
-                    isStartLiveActivity: doc.data().isStartLiveActivity,
-                    token: doc.data().token,
-                    userId: doc.data().userId
-                }));
-                if (userData[0]?.trainCode == '') {
-                    job.stop();
-                }
-                else {
-                    getScheduleTransport(trainLineCode, trainStationCode)
-                        .then((json) => {
-                        sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', json, trainLineCode, trainStationCode, type);
-                    });
-                    cnt += 1;
-                    if (cnt * preriodTime >= timeStopLiveActivity) {
-                        job.stop();
-                        updateDatabaseStopLive(userId);
-                    }
+                const data = await getScheduleTransport(trainLineCode, trainStationCode);
+                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', data, trainLineCode, trainStationCode, type);
+                cnt += 1;
+                if (cnt * preriodTime >= timeStopLiveActivity) {
+                    removeJob(userId);
                 }
             }, null, false, 'America/Los_Angeles');
             job.start();
+            addJob(job, userId);
             response.status(200).json({ success: true });
         }
     }
 });
+function addJob(job, userId) {
+    jobDicts[userId] = job;
+}
+function removeJob(userId) {
+    const job = jobDicts[userId];
+    job?.stop();
+    delete jobDicts[userId];
+}
 app.post('/stopLiveActivity', async (request, response) => {
     const { userId } = request.body;
     if (!userId) {
         response.status(200).json({ success: false, message: 'userId must provide' });
     }
     else {
-        await updateDatabaseStopLive(userId);
+        removeJob(userId);
         response.status(200).json({ success: true });
     }
 });
@@ -273,11 +238,19 @@ app.post('/saveActivityToken', async (request, response) => {
         response.status(200).json({ success: false, message: 'userId and token must provide' });
     }
     else {
-        await db.collection('activityTokens').add({
+        const userData = {
             userId,
             token
-        });
-        console.log('save device token', token, userId);
+        };
+        const snapshots = await db.collection("activityTokens").where("userId", "==", userId).get();
+        if (snapshots.empty) {
+            await db.collection('activityTokens').add(userData);
+        }
+        else {
+            const docRef = snapshots.docs[0].ref;
+            await docRef.update(userData);
+        }
+        console.log('save device token', token);
         response.status(200).json({ success: true });
     }
 });
