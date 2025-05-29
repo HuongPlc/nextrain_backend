@@ -12,6 +12,7 @@ app.use(express.json());
 dotenv.config();
 
 const jobDicts: Record<string, CronJob> = {};
+const lastTrainTime: Record<string, string> = {};
 
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 const serviceAccountBuffer = Buffer.from(serviceAccountBase64!, 'base64');
@@ -87,7 +88,7 @@ function getWaitingTime(waitingTimeSeconds: number): string {
     }
   }
 
-function sendActivityNotification(url: string, deviceToken: string, event: string, content: any, trainLineCode: string, trainStationCode: string, type: string) {
+function sendActivityNotification(url: string, userData: any, event: string, content: any, trainLineCode: string, trainStationCode: string, type: string) {
     const trainData = content?.data?.[`${trainLineCode}-${trainStationCode}`] ?? null;
 
     if (!trainData) {
@@ -99,15 +100,15 @@ function sendActivityNotification(url: string, deviceToken: string, event: strin
     const timestamp = Math.floor(Date.now() / 1000);
 
     if (waitingIntervalTime <= 0) {
-        return;
+        const trainInfo = type == 'UP' ? trainData.UP : trainData.DOWN;
+        lastTrainTime[userData.userId] = trainInfo[0]?.time;
     }
 
     const authenticationToken = generateJwtToken();
     const client = http2.connect(url);
-
     const headers = {
         ':method': 'POST',
-        ':path': `/3/device/${deviceToken}`,
+        ':path': `/3/device/${userData[0].token}`,
         ':scheme': 'https',
         'authorization': `bearer ${authenticationToken}`,
         'apns-topic': process.env.APNS_TOPIC,
@@ -115,7 +116,7 @@ function sendActivityNotification(url: string, deviceToken: string, event: strin
         'apns-priority': 10,
     };
 
-    let payload = {};
+    let payload;
     
     if (event == 'end') {
         payload = {
@@ -123,7 +124,7 @@ function sendActivityNotification(url: string, deviceToken: string, event: strin
                 'event': event,
                 'timestamp': timestamp,
                 'content-state': {},
-                'dismissal-date': timestamp
+                'dismissal-date': 100
             },
         };
     } else {
@@ -135,7 +136,10 @@ function sendActivityNotification(url: string, deviceToken: string, event: strin
                     'estimatedWaitingTime': estimatedWaitingTime,
                     'currentTime': content.curr_time,
                     'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
-                    'waitingIntervalTime': waitingIntervalTime
+                    'waitingIntervalTime': waitingIntervalTime,
+                    'startTime': lastTrainTime[userData.userId] ?? content.curr_time,
+                    'stationName': '',
+                    'destinationName': ''
                 },
             },
         };
@@ -148,7 +152,7 @@ function sendActivityNotification(url: string, deviceToken: string, event: strin
         const statusCode = headers[':status'];
         console.log('this status', statusCode);
         if (statusCode !== 200 && url === process.env.PUSH_NOTIFICATION_URL_DEV) {
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', deviceToken, event, content, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', userData, event, content, trainLineCode, trainStationCode, type);
         }
     });
     request.setEncoding('utf8');
@@ -186,7 +190,6 @@ app.post('/startLiveActivity', async (request, response) => {
         } else if (userData[0]?.trainCode == `${trainLineCode}-${trainStationCode}` && jobDicts[userId]) {
             response.status(200).json({ success: false, message: 'live activity starting' });
         } else {
-            const token = userData[0]?.token;
             const batch = db.batch();
 
             snapshot.docs.forEach(doc => {
@@ -197,7 +200,7 @@ app.post('/startLiveActivity', async (request, response) => {
             removeJob(userId);
 
             const data = await getScheduleTransport(trainLineCode, trainStationCode)
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', data, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, 'update', data, trainLineCode, trainStationCode, type);
                     
             let cnt = 1;
             const preriodTime = 30;
@@ -207,12 +210,12 @@ app.post('/startLiveActivity', async (request, response) => {
                 async function () {
                     const data = await getScheduleTransport(trainLineCode, trainStationCode)
                     const event = cnt * preriodTime >= timeStopLiveActivity ? 'end' : 'update'
-                    sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, event, data, trainLineCode, trainStationCode, type);
+                    sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, event, data, trainLineCode, trainStationCode, type);
 
-                    cnt += 1;
                     if (cnt * preriodTime >= timeStopLiveActivity) {
                         removeJob(userId);
                     }
+                    cnt += 1;
                 },
                 null,
                 false,
