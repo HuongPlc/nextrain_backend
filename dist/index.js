@@ -132,18 +132,31 @@ function sendActivityNotification(url, deviceToken, event, content, trainLineCod
         'apns-push-type': 'liveactivity',
         'apns-priority': 10,
     };
-    const payload = {
-        aps: {
-            'event': event,
-            'timestamp': timestamp,
-            'content-state': {
-                'estimatedWaitingTime': estimatedWaitingTime,
-                'currentTime': content.curr_time,
-                'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
-                'waitingIntervalTime': waitingIntervalTime
+    let payload = {};
+    if (event == 'end') {
+        payload = {
+            aps: {
+                'event': event,
+                'timestamp': timestamp,
+                'content-state': {},
+                'dismissal-date': timestamp
             },
-        },
-    };
+        };
+    }
+    else {
+        payload = {
+            aps: {
+                'event': event,
+                'timestamp': timestamp,
+                'content-state': {
+                    'estimatedWaitingTime': estimatedWaitingTime,
+                    'currentTime': content.curr_time,
+                    'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
+                    'waitingIntervalTime': waitingIntervalTime
+                },
+            },
+        };
+    }
     console.log('this is payload', payload, waitingIntervalTime);
     const request = client.request(headers);
     request.on("response", (headers, flags) => {
@@ -199,10 +212,11 @@ app.post('/startLiveActivity', async (request, response) => {
             sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', data, trainLineCode, trainStationCode, type);
             let cnt = 1;
             const preriodTime = 30;
-            const timeStopLiveActivity = 15 * 60;
+            const timeStopLiveActivity = 1 * 60;
             const job = new cron_1.CronJob('*/30 * * * * *', async function () {
                 const data = await getScheduleTransport(trainLineCode, trainStationCode);
-                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', data, trainLineCode, trainStationCode, type);
+                const event = cnt * preriodTime >= timeStopLiveActivity ? 'end' : 'update';
+                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, event, data, trainLineCode, trainStationCode, type);
                 cnt += 1;
                 if (cnt * preriodTime >= timeStopLiveActivity) {
                     removeJob(userId);
