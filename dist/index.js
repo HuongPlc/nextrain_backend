@@ -48,6 +48,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express_1.default.json());
 dotenv_1.default.config();
 const jobDicts = {};
+const lastTrainTime = {};
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 const serviceAccountBuffer = Buffer.from(serviceAccountBase64, 'base64');
 const serviceAccount = JSON.parse(serviceAccountBuffer.toString('utf8'));
@@ -110,7 +111,7 @@ function getWaitingTime(waitingTimeSeconds) {
         return `${minutes} ${"minutes"}`;
     }
 }
-function sendActivityNotification(url, deviceToken, event, content, trainLineCode, trainStationCode, type) {
+function sendActivityNotification(url, userData, event, content, trainLineCode, trainStationCode, type) {
     const trainData = content?.data?.[`${trainLineCode}-${trainStationCode}`] ?? null;
     if (!trainData) {
         return;
@@ -119,27 +120,28 @@ function sendActivityNotification(url, deviceToken, event, content, trainLineCod
     const estimatedWaitingTime = getWaitingTime(waitingIntervalTime);
     const timestamp = Math.floor(Date.now() / 1000);
     if (waitingIntervalTime <= 0) {
-        return;
+        const trainInfo = type == 'UP' ? trainData.UP : trainData.DOWN;
+        lastTrainTime[userData.userId] = trainInfo[0]?.time;
     }
     const authenticationToken = generateJwtToken();
     const client = http2_1.default.connect(url);
     const headers = {
         ':method': 'POST',
-        ':path': `/3/device/${deviceToken}`,
+        ':path': `/3/device/${userData[0].token}`,
         ':scheme': 'https',
         'authorization': `bearer ${authenticationToken}`,
         'apns-topic': process.env.APNS_TOPIC,
         'apns-push-type': 'liveactivity',
         'apns-priority': 10,
     };
-    let payload = {};
+    let payload;
     if (event == 'end') {
         payload = {
             aps: {
                 'event': event,
                 'timestamp': timestamp,
                 'content-state': {},
-                'dismissal-date': timestamp
+                'dismissal-date': 100
             },
         };
     }
@@ -152,7 +154,8 @@ function sendActivityNotification(url, deviceToken, event, content, trainLineCod
                     'estimatedWaitingTime': estimatedWaitingTime,
                     'currentTime': content.curr_time,
                     'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
-                    'waitingIntervalTime': waitingIntervalTime
+                    'waitingIntervalTime': waitingIntervalTime,
+                    'startTime': lastTrainTime[userData.userId] ?? content.curr_time
                 },
             },
         };
@@ -163,7 +166,7 @@ function sendActivityNotification(url, deviceToken, event, content, trainLineCod
         const statusCode = headers[':status'];
         console.log('this status', statusCode);
         if (statusCode !== 200 && url === process.env.PUSH_NOTIFICATION_URL_DEV) {
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', deviceToken, event, content, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', userData, event, content, trainLineCode, trainStationCode, type);
         }
     });
     request.setEncoding('utf8');
@@ -200,7 +203,6 @@ app.post('/startLiveActivity', async (request, response) => {
             response.status(200).json({ success: false, message: 'live activity starting' });
         }
         else {
-            const token = userData[0]?.token;
             const batch = db.batch();
             snapshot.docs.forEach(doc => {
                 const docRef = doc.ref;
@@ -209,18 +211,18 @@ app.post('/startLiveActivity', async (request, response) => {
             await batch.commit();
             removeJob(userId);
             const data = await getScheduleTransport(trainLineCode, trainStationCode);
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', data, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, 'update', data, trainLineCode, trainStationCode, type);
             let cnt = 1;
             const preriodTime = 30;
             const timeStopLiveActivity = 15 * 60;
             const job = new cron_1.CronJob('*/30 * * * * *', async function () {
                 const data = await getScheduleTransport(trainLineCode, trainStationCode);
                 const event = cnt * preriodTime >= timeStopLiveActivity ? 'end' : 'update';
-                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, event, data, trainLineCode, trainStationCode, type);
-                cnt += 1;
+                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, event, data, trainLineCode, trainStationCode, type);
                 if (cnt * preriodTime >= timeStopLiveActivity) {
                     removeJob(userId);
                 }
+                cnt += 1;
             }, null, false, 'America/Los_Angeles');
             job.start();
             addJob(job, userId);
