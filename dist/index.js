@@ -212,7 +212,7 @@ app.post('/startLiveActivity', async (request, response) => {
             sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', token, 'update', data, trainLineCode, trainStationCode, type);
             let cnt = 1;
             const preriodTime = 30;
-            const timeStopLiveActivity = 1 * 60;
+            const timeStopLiveActivity = 15 * 60;
             const job = new cron_1.CronJob('*/30 * * * * *', async function () {
                 const data = await getScheduleTransport(trainLineCode, trainStationCode);
                 const event = cnt * preriodTime >= timeStopLiveActivity ? 'end' : 'update';

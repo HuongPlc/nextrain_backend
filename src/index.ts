@@ -201,7 +201,7 @@ app.post('/startLiveActivity', async (request, response) => {
                     
             let cnt = 1;
             const preriodTime = 30;
-            const timeStopLiveActivity = 1 * 60;
+            const timeStopLiveActivity = 15 * 60;
             const job = new CronJob(
                 '*/30 * * * * *',
                 async function () {
