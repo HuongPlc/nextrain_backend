@@ -5,6 +5,7 @@ import http2 from "http2";
 import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { Language, trainStationMap } from './trainStationMap';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,7 +89,7 @@ function getWaitingTime(waitingTimeSeconds: number): string {
     }
   }
 
-function sendActivityNotification(url: string, userData: any, event: string, content: any, trainLineCode: string, trainStationCode: string, type: string) {
+function sendActivityNotification(url: string, userData: any, event: string, content: any, trainLineCode: string, trainStationCode: string, type: string, lang: Language) {
     const trainData = content?.data?.[`${trainLineCode}-${trainStationCode}`] ?? null;
 
     if (!trainData) {
@@ -128,6 +129,7 @@ function sendActivityNotification(url: string, userData: any, event: string, con
             },
         };
     } else {
+        const destinationName = type == 'UP' ? getPlatformDestination(trainStationCode, trainLineCode, 'upboundDestination1', 'upboundDestination2', lang) : getPlatformDestination(trainStationCode, trainLineCode, 'downboundDestination1', 'downboundDestination2', lang);
         payload = {
             aps: {
                 'event': event,
@@ -138,8 +140,8 @@ function sendActivityNotification(url: string, userData: any, event: string, con
                     'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
                     'waitingIntervalTime': waitingIntervalTime,
                     'startTime': lastTrainTime[userData.userId] ?? content.curr_time,
-                    'stationName': '',
-                    'destinationName': ''
+                    'stationName': `${trainStationMap(lang)[`${trainLineCode}-${trainStationCode}`]?.stationName ?? ''}`,
+                    'destinationName': destinationName
                 },
             },
         };
@@ -152,7 +154,7 @@ function sendActivityNotification(url: string, userData: any, event: string, con
         const statusCode = headers[':status'];
         console.log('this status', statusCode);
         if (statusCode !== 200 && url === process.env.PUSH_NOTIFICATION_URL_DEV) {
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', userData, event, content, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', userData, event, content, trainLineCode, trainStationCode, type, lang);
         }
     });
     request.setEncoding('utf8');
@@ -169,8 +171,34 @@ function sendActivityNotification(url: string, userData: any, event: string, con
     });
 }
 
+function getPlatformDestination(
+    trainStationCode: string,
+    trainLineCode: string,
+    trainDirectionCode1: string,
+    trainDirectionCode2: string,
+    lang: Language
+  ): string {
+    let platformDestination = 'a';
+    let platformDestination1 = '';
+    let platformDestinationCode1: string | undefined;
+    let platformDestination2 = '';
+    let platformDestinationCode2: string | undefined;
+    const trainMap = trainStationMap(lang);
+
+    platformDestinationCode1 = trainMap[`${trainLineCode}-${trainStationCode}`][trainDirectionCode1] ?? '';
+    platformDestinationCode2 = trainMap[`${trainLineCode}-${trainStationCode}`][trainDirectionCode2] ?? '';
+    platformDestination1 = trainMap[platformDestinationCode1]?.stationName ?? '';
+
+    const stationName = trainMap[platformDestinationCode2]?.stationName;
+    if (stationName) {
+        platformDestination2 = `/${stationName}`;
+    }
+    platformDestination = `${platformDestination1} ${platformDestination2}`.trim();
+    return platformDestination;
+  }
+
 app.post('/startLiveActivity', async (request, response) => {
-    const { userId, trainLineCode, trainStationCode, type } = request.body;
+    const { userId, trainLineCode, trainStationCode, type, lang } = request.body;
     
     if (!userId) {
         response.status(200).json({ success: false, message: 'userId must provide' });
@@ -200,7 +228,7 @@ app.post('/startLiveActivity', async (request, response) => {
             removeJob(userId);
 
             const data = await getScheduleTransport(trainLineCode, trainStationCode)
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, 'update', data, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, 'update', data, trainLineCode, trainStationCode, type, lang);
                     
             let cnt = 1;
             const preriodTime = 30;
@@ -210,7 +238,7 @@ app.post('/startLiveActivity', async (request, response) => {
                 async function () {
                     const data = await getScheduleTransport(trainLineCode, trainStationCode)
                     const event = cnt * preriodTime >= timeStopLiveActivity ? 'end' : 'update'
-                    sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, event, data, trainLineCode, trainStationCode, type);
+                    sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, event, data, trainLineCode, trainStationCode, type, lang);
 
                     if (cnt * preriodTime >= timeStopLiveActivity) {
                         removeJob(userId);
