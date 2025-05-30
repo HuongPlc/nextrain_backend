@@ -43,6 +43,7 @@ const http2_1 = __importDefault(require("http2"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const axios_1 = __importDefault(require("axios"));
+const trainStationMap_1 = require("./trainStationMap");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 app.use(express_1.default.json());
@@ -111,7 +112,7 @@ function getWaitingTime(waitingTimeSeconds) {
         return `${minutes} ${"minutes"}`;
     }
 }
-function sendActivityNotification(url, userData, event, content, trainLineCode, trainStationCode, type) {
+function sendActivityNotification(url, userData, event, content, trainLineCode, trainStationCode, type, lang) {
     const trainData = content?.data?.[`${trainLineCode}-${trainStationCode}`] ?? null;
     if (!trainData) {
         return;
@@ -146,6 +147,7 @@ function sendActivityNotification(url, userData, event, content, trainLineCode, 
         };
     }
     else {
+        const destinationName = type == 'UP' ? getPlatformDestination(trainStationCode, trainLineCode, 'upboundDestination1', 'upboundDestination2', lang) : getPlatformDestination(trainStationCode, trainLineCode, 'downboundDestination1', 'downboundDestination2', lang);
         payload = {
             aps: {
                 'event': event,
@@ -155,7 +157,9 @@ function sendActivityNotification(url, userData, event, content, trainLineCode, 
                     'currentTime': content.curr_time,
                     'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
                     'waitingIntervalTime': waitingIntervalTime,
-                    'startTime': lastTrainTime[userData.userId] ?? content.curr_time
+                    'startTime': lastTrainTime[userData.userId] ?? content.curr_time,
+                    'stationName': `${(0, trainStationMap_1.trainStationMap)(lang)[`${trainLineCode}-${trainStationCode}`]?.stationName ?? ''}`,
+                    'destinationName': destinationName
                 },
             },
         };
@@ -166,7 +170,7 @@ function sendActivityNotification(url, userData, event, content, trainLineCode, 
         const statusCode = headers[':status'];
         console.log('this status', statusCode);
         if (statusCode !== 200 && url === process.env.PUSH_NOTIFICATION_URL_DEV) {
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', userData, event, content, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_PROD ?? '', userData, event, content, trainLineCode, trainStationCode, type, lang);
         }
     });
     request.setEncoding('utf8');
@@ -180,8 +184,25 @@ function sendActivityNotification(url, userData, event, content, trainLineCode, 
         client.close();
     });
 }
+function getPlatformDestination(trainStationCode, trainLineCode, trainDirectionCode1, trainDirectionCode2, lang) {
+    let platformDestination = 'a';
+    let platformDestination1 = '';
+    let platformDestinationCode1;
+    let platformDestination2 = '';
+    let platformDestinationCode2;
+    const trainMap = (0, trainStationMap_1.trainStationMap)(lang);
+    platformDestinationCode1 = trainMap[`${trainLineCode}-${trainStationCode}`][trainDirectionCode1] ?? '';
+    platformDestinationCode2 = trainMap[`${trainLineCode}-${trainStationCode}`][trainDirectionCode2] ?? '';
+    platformDestination1 = trainMap[platformDestinationCode1]?.stationName ?? '';
+    const stationName = trainMap[platformDestinationCode2]?.stationName;
+    if (stationName) {
+        platformDestination2 = `/${stationName}`;
+    }
+    platformDestination = `${platformDestination1} ${platformDestination2}`.trim();
+    return platformDestination;
+}
 app.post('/startLiveActivity', async (request, response) => {
-    const { userId, trainLineCode, trainStationCode, type } = request.body;
+    const { userId, trainLineCode, trainStationCode, type, lang } = request.body;
     if (!userId) {
         response.status(200).json({ success: false, message: 'userId must provide' });
     }
@@ -211,14 +232,14 @@ app.post('/startLiveActivity', async (request, response) => {
             await batch.commit();
             removeJob(userId);
             const data = await getScheduleTransport(trainLineCode, trainStationCode);
-            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, 'update', data, trainLineCode, trainStationCode, type);
+            sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, 'update', data, trainLineCode, trainStationCode, type, lang);
             let cnt = 1;
             const preriodTime = 30;
             const timeStopLiveActivity = 15 * 60;
             const job = new cron_1.CronJob('*/30 * * * * *', async function () {
                 const data = await getScheduleTransport(trainLineCode, trainStationCode);
                 const event = cnt * preriodTime >= timeStopLiveActivity ? 'end' : 'update';
-                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, event, data, trainLineCode, trainStationCode, type);
+                sendActivityNotification(process.env.PUSH_NOTIFICATION_URL_DEV ?? '', userData, event, data, trainLineCode, trainStationCode, type, lang);
                 if (cnt * preriodTime >= timeStopLiveActivity) {
                     removeJob(userId);
                 }
