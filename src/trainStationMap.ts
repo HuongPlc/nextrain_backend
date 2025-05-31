@@ -3,6 +3,9 @@ import zh_cn from './locales/zh_cn';
 import zh_tw from './locales/zh_tw';
 
 export type Language = 'en' | 'zh_cn' | 'zh_tw';
+const isLanguage = (str: string): str is Language => {
+    return ['en', 'zh_cn', 'zh_tw'].includes(str);
+};
 
 const locales: Record<Language, Record<string, string>> = {
   en,
@@ -10,10 +13,18 @@ const locales: Record<Language, Record<string, string>> = {
   zh_tw,
 };
 
+export function getValue(lang: Language, fromKey: string): string {
+  if (!isLanguage(lang)) {
+      lang = 'en';
+  }
+  return locales[lang][fromKey];
+}
+
 export function trainStationMap(lang: Language): Record<string, Record<string, string>> {
+    
     return {
           'AEL-HOK': {
-            'stationName': locales[lang]['hongKong'],
+            'stationName': getValue(lang, 'hongKong'),
             'trainLineCode': 'AEL',
             'trainStationCode': 'HOK',
             'upboundDestination1': 'AEL-AWE',
@@ -24,7 +35,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.15831246451'
           },
           'AEL-KOW': {
-            'stationName': locales[lang]['kowloon'],
+            'stationName': getValue(lang, 'kowloon'),
             'trainLineCode': 'AEL',
             'trainStationCode': 'KOW',
             'upboundDestination1': 'AEL-AWE',
@@ -35,7 +46,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.161465298859'
           },
           'AEL-TSY': {
-            'stationName': locales[lang]['tsingYi'],
+            'stationName': getValue(lang, 'tsingYi'),
             'trainLineCode': 'AEL',
             'trainStationCode': 'TSY',
             'upboundDestination1': 'AEL-AWE',
@@ -46,7 +57,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.107667501234'
           },
           'AEL-AIR': {
-            'stationName': locales[lang]['airport'],
+            'stationName': getValue(lang, 'airport'),
             'trainLineCode': 'AEL',
             'trainStationCode': 'AIR',
             'upboundDestination1': 'AEL-AWE',
@@ -57,7 +68,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '113.93657800191'
           },
           'AEL-AWE': {
-            'stationName': locales[lang]['airportWorldExpo'],
+            'stationName': getValue(lang, 'airportWorldExpo'),
             'trainLineCode': 'AEL',
             'trainStationCode': 'AWE',
             'upboundDestination1': '',
@@ -68,7 +79,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '113.943674976243'
           },
           'TCL-HOK': {
-            'stationName': locales[lang]['hongKong'],
+            'stationName': getValue(lang, 'hongKong'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'HOK',
             'upboundDestination1': 'TCL-TUC',
@@ -79,7 +90,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.158368192502'
           },
           'TCL-KOW': {
-            'stationName': locales[lang]['kowloon'],
+            'stationName': getValue(lang, 'kowloon'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'KOW',
             'upboundDestination1': 'TCL-TUC',
@@ -90,7 +101,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.161376623524'
           },
           'TCL-OLY': {
-            'stationName': locales[lang]['olympic'],
+            'stationName': getValue(lang, 'olympic'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'OLY',
             'upboundDestination1': 'TCL-TUC',
@@ -101,7 +112,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.160128608504'
           },
           'TCL-NAC': {
-            'stationName': locales[lang]['namCheong'],
+            'stationName': getValue(lang, 'namCheong'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'NAC',
             'upboundDestination1': 'TCL-TUC',
@@ -112,7 +123,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.153666861205'
           },
           'TCL-LAK': {
-            'stationName': locales[lang]['laiKing'],
+            'stationName': getValue(lang, 'laiKing'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'LAK',
             'upboundDestination1': 'TCL-TUC',
@@ -123,7 +134,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.126166028018'
           },
           'TCL-TSY': {
-            'stationName': locales[lang]['tsingYi'],
+            'stationName': getValue(lang, 'tsingYi'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'TSY',
             'upboundDestination1': 'TCL-TUC',
@@ -134,7 +145,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.107566087589'
           },
           'TCL-SUN': {
-            'stationName': locales[lang]['sunnyBay'],
+            'stationName': getValue(lang, 'sunnyBay'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'SUN',
             'upboundDestination1': 'TCL-TUC',
@@ -145,7 +156,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.028954989544'
           },
           'TCL-TUC': {
-            'stationName': locales[lang]['tungChung'],
+            'stationName': getValue(lang, 'tungChung'),
             'trainLineCode': 'TCL',
             'trainStationCode': 'TUC',
             'upboundDestination1': '',
@@ -156,7 +167,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '113.941383703626'
           },
           'TML-WKS': {
-            'stationName': locales[lang]['wuKaiSha'],
+            'stationName': getValue(lang, 'wuKaiSha'),
             'trainLineCode': 'TML',
             'trainStationCode': 'WKS',
             'upboundDestination1': 'TML-TUM',
@@ -167,7 +178,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.243842651444'
           },
           'TML-MOS': {
-            'stationName': locales[lang]['maOnShan'],
+            'stationName': getValue(lang, 'maOnShan'),
             'trainLineCode': 'TML',
             'trainStationCode': 'MOS',
             'upboundDestination1': 'TML-TUM',
@@ -178,7 +189,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.231653870046'
           },
           'TML-HEO': {
-            'stationName': locales[lang]['hengOn'],
+            'stationName': getValue(lang, 'hengOn'),
             'trainLineCode': 'TML',
             'trainStationCode': 'HEO',
             'upboundDestination1': 'TML-TUM',
@@ -189,7 +200,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.225709301905'
           },
           'TML-TSH': {
-            'stationName': locales[lang]['taiShuiHang'],
+            'stationName': getValue(lang, 'taiShuiHang'),
             'trainLineCode': 'TML',
             'trainStationCode': 'TSH',
             'upboundDestination1': 'TML-TUM',
@@ -200,7 +211,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.222715263326'
           },
           'TML-SHM': {
-            'stationName': locales[lang]['shekMun'],
+            'stationName': getValue(lang, 'shekMun'),
             'trainLineCode': 'TML',
             'trainStationCode': 'SHM',
             'upboundDestination1': 'TML-TUM',
@@ -211,7 +222,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.208354133427'
           },
           'TML-CIO': {
-            'stationName': locales[lang]['cityOne'],
+            'stationName': getValue(lang, 'cityOne'),
             'trainLineCode': 'TML',
             'trainStationCode': 'CIO',
             'upboundDestination1': 'TML-TUM',
@@ -222,7 +233,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.20367707783'
           },
           'TML-STW': {
-            'stationName': locales[lang]['shaTinWai'],
+            'stationName': getValue(lang, 'shaTinWai'),
             'trainLineCode': 'TML',
             'trainStationCode': 'STW',
             'upboundDestination1': 'TML-TUM',
@@ -233,7 +244,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.194998047622'
           },
           'TML-CKT': {
-            'stationName': locales[lang]['cheKungTemple'],
+            'stationName': getValue(lang, 'cheKungTemple'),
             'trainLineCode': 'TML',
             'trainStationCode': 'CKT',
             'upboundDestination1': 'TML-TUM',
@@ -244,7 +255,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.1859481406'
           },
           'TML-TAW': {
-            'stationName': locales[lang]['taiWai'],
+            'stationName': getValue(lang, 'taiWai'),
             'trainLineCode': 'TML',
             'trainStationCode': 'TAW',
             'upboundDestination1': 'TML-TUM',
@@ -255,7 +266,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.178615928493'
           },
           'TML-HIK': {
-            'stationName': locales[lang]['hinKeng'],
+            'stationName': getValue(lang, 'hinKeng'),
             'trainLineCode': 'TML',
             'trainStationCode': 'HIK',
             'upboundDestination1': 'TML-TUM',
@@ -266,7 +277,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.170797637303'
           },
           'TML-DIH': {
-            'stationName': locales[lang]['diamondHill'],
+            'stationName': getValue(lang, 'diamondHill'),
             'trainLineCode': 'TML',
             'trainStationCode': 'DIH',
             'upboundDestination1': 'TML-TUM',
@@ -277,7 +288,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.201694674129'
           },
           'TML-KAT': {
-            'stationName': locales[lang]['kaiTak'],
+            'stationName': getValue(lang, 'kaiTak'),
             'trainLineCode': 'TML',
             'trainStationCode': 'KAT',
             'upboundDestination1': 'TML-TUM',
@@ -288,7 +299,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.199524827844'
           },
           'TML-SUW': {
-            'stationName': locales[lang]['sungWongToi'],
+            'stationName': getValue(lang, 'sungWongToi'),
             'trainLineCode': 'TML',
             'trainStationCode': 'SUW',
             'upboundDestination1': 'TML-TUM',
@@ -299,7 +310,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.191297210595'
           },
           'TML-TKW': {
-            'stationName': locales[lang]['toKwaWan'],
+            'stationName': getValue(lang, 'toKwaWan'),
             'trainLineCode': 'TML',
             'trainStationCode': 'TKW',
             'upboundDestination1': 'TML-TUM',
@@ -310,7 +321,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.187649427266'
           },
           'TML-HOM': {
-            'stationName': locales[lang]['hoManTin'],
+            'stationName': getValue(lang, 'hoManTin'),
             'trainLineCode': 'TML',
             'trainStationCode': 'HOM',
             'upboundDestination1': 'TML-TUM',
@@ -321,7 +332,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.182734579657'
           },
           'TML-HUH': {
-            'stationName': locales[lang]['hungHom'],
+            'stationName': getValue(lang, 'hungHom'),
             'trainLineCode': 'TML',
             'trainStationCode': 'HUH',
             'upboundDestination1': 'TML-TUM',
@@ -332,7 +343,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.182098601031'
           },
           'TML-ETS': {
-            'stationName': locales[lang]['eastTsimShaTsui'],
+            'stationName': getValue(lang, 'eastTsimShaTsui'),
             'trainLineCode': 'TML',
             'trainStationCode': 'ETS',
             'upboundDestination1': 'TML-TUM',
@@ -343,7 +354,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.173379053166'
           },
           'TML-AUS': {
-            'stationName': locales[lang]['austin'],
+            'stationName': getValue(lang, 'austin'),
             'trainLineCode': 'TML',
             'trainStationCode': 'AUS',
             'upboundDestination1': 'TML-TUM',
@@ -354,7 +365,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.16609417375'
           },
           'TML-NAC': {
-            'stationName': locales[lang]['namCheong'],
+            'stationName': getValue(lang, 'namCheong'),
             'trainLineCode': 'TML',
             'trainStationCode': 'NAC',
             'upboundDestination1': 'TML-TUM',
@@ -365,7 +376,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.154526474781'
           },
           'TML-MEF': {
-            'stationName': locales[lang]['meiFoo'],
+            'stationName': getValue(lang, 'meiFoo'),
             'trainLineCode': 'TML',
             'trainStationCode': 'MEF',
             'upboundDestination1': 'TML-TUM',
@@ -376,7 +387,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.137988973012'
           },
           'TML-TWW': {
-            'stationName': locales[lang]['tsuenWanWest'],
+            'stationName': getValue(lang, 'tsuenWanWest'),
             'trainLineCode': 'TML',
             'trainStationCode': 'TWW',
             'upboundDestination1': 'TML-TUM',
@@ -387,7 +398,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.109687969944'
           },
           'TML-KSR': {
-            'stationName': locales[lang]['kamSheungRoad'],
+            'stationName': getValue(lang, 'kamSheungRoad'),
             'trainLineCode': 'TML',
             'trainStationCode': 'KSR',
             'upboundDestination1': 'TML-TUM',
@@ -398,7 +409,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.063569079205'
           },
           'TML-YUL': {
-            'stationName': locales[lang]['yuenLong'],
+            'stationName': getValue(lang, 'yuenLong'),
             'trainLineCode': 'TML',
             'trainStationCode': 'YUL',
             'upboundDestination1': 'TML-TUM',
@@ -409,7 +420,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.034710730547'
           },
           'TML-LOP': {
-            'stationName': locales[lang]['longPing'],
+            'stationName': getValue(lang, 'longPing'),
             'trainLineCode': 'TML',
             'trainStationCode': 'LOP',
             'upboundDestination1': 'TML-TUM',
@@ -420,7 +431,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.025505389485'
           },
           'TML-TIS': {
-            'stationName': locales[lang]['tinShuiWai'],
+            'stationName': getValue(lang, 'tinShuiWai'),
             'trainLineCode': 'TML',
             'trainStationCode': 'TIS',
             'upboundDestination1': 'TML-TUM',
@@ -431,7 +442,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.004754368604'
           },
           'TML-SIH': {
-            'stationName': locales[lang]['siuHong'],
+            'stationName': getValue(lang, 'siuHong'),
             'trainLineCode': 'TML',
             'trainStationCode': 'SIH',
             'upboundDestination1': 'TML-TUM',
@@ -442,7 +453,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '113.97904765487'
           },
           'TML-TUM': {
-            'stationName': locales[lang]['tuenMun'],
+            'stationName': getValue(lang, 'tuenMun'),
             'trainLineCode': 'TML',
             'trainStationCode': 'TUM',
             'upboundDestination1': '',
@@ -453,7 +464,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '113.973160850025'
           },
           'TKL-NOP': {
-            'stationName': locales[lang]['northPoint'],
+            'stationName': getValue(lang, 'northPoint'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'NOP',
             'upboundDestination1': 'TKL-POA',
@@ -464,7 +475,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.200483210686'
           },
           'TKL-QUB': {
-            'stationName': locales[lang]['quarryBay'],
+            'stationName': getValue(lang, 'quarryBay'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'QUB',
             'upboundDestination1': 'TKL-POA',
@@ -475,7 +486,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.209735748235'
           },
           'TKL-YAT': {
-            'stationName': locales[lang]['yauTong'],
+            'stationName': getValue(lang, 'yauTong'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'YAT',
             'upboundDestination1': 'TKL-POA',
@@ -486,7 +497,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.2369968063'
           },
           'TKL-TIK': {
-            'stationName': locales[lang]['tiuKengLeng'],
+            'stationName': getValue(lang, 'tiuKengLeng'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'TIK',
             'upboundDestination1': 'TKL-POA',
@@ -497,7 +508,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.252826843666'
           },
           'TKL-TKO': {
-            'stationName': locales[lang]['tseungKwanO'],
+            'stationName': getValue(lang, 'tseungKwanO'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'TKO',
             'upboundDestination1': 'TKL-POA',
@@ -508,7 +519,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.260006593803'
           },
           'TKL-LHP': {
-            'stationName': locales[lang]['lohasPark'],
+            'stationName': getValue(lang, 'lohasPark'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'LHP',
             'upboundDestination1': '',
@@ -519,7 +530,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.269615130734'
           },
           'TKL-HAH': {
-            'stationName': locales[lang]['hangHau'],
+            'stationName': getValue(lang, 'hangHau'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'HAH',
             'upboundDestination1': 'TKL-POA',
@@ -530,7 +541,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.264378485223'
           },
           'TKL-POA': {
-            'stationName': locales[lang]['poLam'],
+            'stationName': getValue(lang, 'poLam'),
             'trainLineCode': 'TKL',
             'trainStationCode': 'POA',
             'upboundDestination1': '',
@@ -541,7 +552,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.257839990958'
           },
           'EAL-ADM': {
-            'stationName': locales[lang]['admiralty'],
+            'stationName': getValue(lang, 'admiralty'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'ADM',
             'upboundDestination1': 'EAL-LOW',
@@ -552,7 +563,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.16456152106'
           },
           'EAL-EXC': {
-            'stationName': locales[lang]['exhibitionCentre'],
+            'stationName': getValue(lang, 'exhibitionCentre'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'EXC',
             'upboundDestination1': 'EAL-LOW',
@@ -563,7 +574,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.175489925648'
           },
           'EAL-HUH': {
-            'stationName': locales[lang]['hungHom'],
+            'stationName': getValue(lang, 'hungHom'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'HUH',
             'upboundDestination1': 'EAL-LOW',
@@ -574,7 +585,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.182240603448'
           },
           'EAL-MKK': {
-            'stationName': locales[lang]['mongKokEast'],
+            'stationName': getValue(lang, 'mongKokEast'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'MKK',
             'upboundDestination1': 'EAL-LOW',
@@ -585,7 +596,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.172569551494'
           },
           'EAL-KOT': {
-            'stationName': locales[lang]['kowloonTong'],
+            'stationName': getValue(lang, 'kowloonTong'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'KOT',
             'upboundDestination1': 'EAL-LOW',
@@ -596,7 +607,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.176091189708'
           },
           'EAL-TAW': {
-            'stationName': locales[lang]['taiWai'],
+            'stationName': getValue(lang, 'taiWai'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'TAW',
             'upboundDestination1': 'EAL-LOW',
@@ -607,7 +618,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.17921992861'
           },
           'EAL-SHT': {
-            'stationName': locales[lang]['shaTin'],
+            'stationName': getValue(lang, 'shaTin'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'SHT',
             'upboundDestination1': 'EAL-LOW',
@@ -618,7 +629,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.186993614572'
           },
           'EAL-FOT': {
-            'stationName': locales[lang]['foTan'],
+            'stationName': getValue(lang, 'foTan'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'FOT',
             'upboundDestination1': 'EAL-LOW',
@@ -629,7 +640,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.198173119154'
           },
           'EAL-FAC': {
-            'stationName': locales[lang]['racecourse'],
+            'stationName': getValue(lang, 'racecourse'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'FAC',
             'upboundDestination1': 'EAL-LOW',
@@ -640,7 +651,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.203185161244'
           },
           'EAL-UNI': {
-            'stationName': locales[lang]['university'],
+            'stationName': getValue(lang, 'university'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'UNI',
             'upboundDestination1': 'EAL-LOW',
@@ -651,7 +662,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.209919686593'
           },
           'EAL-TAP': {
-            'stationName': locales[lang]['taiPoMarket'],
+            'stationName': getValue(lang, 'taiPoMarket'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'TAP',
             'upboundDestination1': 'EAL-LOW',
@@ -662,7 +673,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.170499820958'
           },
           'EAL-TWO': {
-            'stationName': locales[lang]['taiWo'],
+            'stationName': getValue(lang, 'taiWo'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'TWO',
             'upboundDestination1': 'EAL-LOW',
@@ -673,7 +684,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.161233228319'
           },
           'EAL-FAN': {
-            'stationName': locales[lang]['fanling'],
+            'stationName': getValue(lang, 'fanling'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'FAN',
             'upboundDestination1': 'EAL-LOW',
@@ -684,7 +695,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.138656761891'
           },
           'EAL-SHS': {
-            'stationName': locales[lang]['sheungShui'],
+            'stationName': getValue(lang, 'sheungShui'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'SHS',
             'upboundDestination1': 'EAL-LOW',
@@ -695,7 +706,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.127905481275'
           },
           'EAL-LOW': {
-            'stationName': locales[lang]['loWu'],
+            'stationName': getValue(lang, 'loWu'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'LOW',
             'upboundDestination1': '',
@@ -706,7 +717,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.113351835302'
           },
           'EAL-LMC': {
-            'stationName': locales[lang]['lokMaChau'],
+            'stationName': getValue(lang, 'lokMaChau'),
             'trainLineCode': 'EAL',
             'trainStationCode': 'LMC',
             'upboundDestination1': '',
@@ -717,7 +728,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.065637110739'
           },
           'SIL-ADM': {
-            'stationName': locales[lang]['admiralty'],
+            'stationName': getValue(lang, 'admiralty'),
             'trainLineCode': 'SIL',
             'trainStationCode': 'ADM',
             'upboundDestination1': 'SIL-SOH',
@@ -728,7 +739,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.165205329332'
           },
           'SIL-OCP': {
-            'stationName': locales[lang]['oceanPark'],
+            'stationName': getValue(lang, 'oceanPark'),
             'trainLineCode': 'SIL',
             'trainStationCode': 'OCP',
             'upboundDestination1': 'SIL-SOH',
@@ -739,7 +750,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.174410698335'
           },
           'SIL-WCH': {
-            'stationName': locales[lang]['wongChukHang'],
+            'stationName': getValue(lang, 'wongChukHang'),
             'trainLineCode': 'SIL',
             'trainStationCode': 'WCH',
             'upboundDestination1': 'SIL-SOH',
@@ -750,7 +761,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.168060854122'
           },
           'SIL-LET': {
-            'stationName': locales[lang]['leiTung'],
+            'stationName': getValue(lang, 'leiTung'),
             'trainLineCode': 'SIL',
             'trainStationCode': 'LET',
             'upboundDestination1': 'SIL-SOH',
@@ -761,7 +772,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.156091843426'
           },
           'SIL-SOH': {
-            'stationName': locales[lang]['southHorizon'],
+            'stationName': getValue(lang, 'southHorizon'),
             'trainLineCode': 'SIL',
             'trainStationCode': 'SOH',
             'upboundDestination1': '',
@@ -772,7 +783,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.148732221292'
           },
           'TWL-CEN': {
-            'stationName': locales[lang]['central'],
+            'stationName': getValue(lang, 'central'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'CEN',
             'upboundDestination1': 'TWL-TSW',
@@ -783,7 +794,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.158260616434'
           },
           'TWL-ADM': {
-            'stationName': locales[lang]['admiralty'],
+            'stationName': getValue(lang, 'admiralty'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'ADM',
             'upboundDestination1': 'TWL-TSW',
@@ -794,7 +805,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.164813966551'
           },
           'TWL-TST': {
-            'stationName': locales[lang]['tsimShaTsui'],
+            'stationName': getValue(lang, 'tsimShaTsui'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'TST',
             'upboundDestination1': 'TWL-TSW',
@@ -805,7 +816,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.172213326909'
           },
           'TWL-JOR': {
-            'stationName': locales[lang]['jordan'],
+            'stationName': getValue(lang, 'jordan'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'JOR',
             'upboundDestination1': 'TWL-TSW',
@@ -816,7 +827,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.171631828581'
           },
           'TWL-YMT': {
-            'stationName': locales[lang]['yauMaTei'],
+            'stationName': getValue(lang, 'yauMaTei'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'YMT',
             'upboundDestination1': 'TWL-TSW',
@@ -827,7 +838,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.170667962319'
           },
           'TWL-MOK': {
-            'stationName': locales[lang]['mongKok'],
+            'stationName': getValue(lang, 'mongKok'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'MOK',
             'upboundDestination1': 'TWL-TSW',
@@ -838,7 +849,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.169375764057'
           },
           'TWL-PRE': {
-            'stationName': locales[lang]['princeEdward'],
+            'stationName': getValue(lang, 'princeEdward'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'PRE',
             'upboundDestination1': 'TWL-TSW',
@@ -849,7 +860,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.168366114885'
           },
           'TWL-SSP': {
-            'stationName': locales[lang]['shamShuiPo'],
+            'stationName': getValue(lang, 'shamShuiPo'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'SSP',
             'upboundDestination1': 'TWL-TSW',
@@ -860,7 +871,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.162254716179'
           },
           'TWL-CSW': {
-            'stationName': locales[lang]['cheungShaWan'],
+            'stationName': getValue(lang, 'cheungShaWan'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'CSW',
             'upboundDestination1': 'TWL-TSW',
@@ -871,7 +882,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.156032501383'
           },
           'TWL-LCK': {
-            'stationName': locales[lang]['laiChiKok'],
+            'stationName': getValue(lang, 'laiChiKok'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'LCK',
             'upboundDestination1': 'TWL-TSW',
@@ -882,7 +893,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.148021098322'
           },
           'TWL-MEF': {
-            'stationName': locales[lang]['meiFoo'],
+            'stationName': getValue(lang, 'meiFoo'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'MEF',
             'upboundDestination1': 'TWL-TSW',
@@ -893,7 +904,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.140227869199'
           },
           'TWL-LAK': {
-            'stationName': locales[lang]['laiKing'],
+            'stationName': getValue(lang, 'laiKing'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'LAK',
             'upboundDestination1': 'TWL-TSW',
@@ -904,7 +915,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.12630761803'
           },
           'TWL-KWF': {
-            'stationName': locales[lang]['kwaiFong'],
+            'stationName': getValue(lang, 'kwaiFong'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'KWF',
             'upboundDestination1': 'TWL-TSW',
@@ -915,7 +926,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.127810363859'
           },
           'TWL-KWH': {
-            'stationName': locales[lang]['kwaiHing'],
+            'stationName': getValue(lang, 'kwaiHing'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'KWH',
             'upboundDestination1': 'TWL-TSW',
@@ -926,7 +937,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.131201177663'
           },
           'TWL-TWH': {
-            'stationName': locales[lang]['taiWoHau'],
+            'stationName': getValue(lang, 'taiWoHau'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'TWH',
             'upboundDestination1': 'TWL-TSW',
@@ -937,7 +948,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.12505630057'
           },
           'TWL-TSW': {
-            'stationName': locales[lang]['tsuenWan'],
+            'stationName': getValue(lang, 'tsuenWan'),
             'trainLineCode': 'TWL',
             'trainStationCode': 'TSW',
             'upboundDestination1': '',
@@ -948,7 +959,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.117702052283'
           },
           'ISL-KET': {
-            'stationName': locales[lang]['kennedyTown'],
+            'stationName': getValue(lang, 'kennedyTown'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'KET',
             'upboundDestination1': 'ISL-CHW',
@@ -959,7 +970,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.128870125278'
           },
           'ISL-HKU': {
-            'stationName': locales[lang]['hku'],
+            'stationName': getValue(lang, 'hku'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'HKU',
             'upboundDestination1': 'ISL-CHW',
@@ -970,7 +981,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.135033166788'
           },
           'ISL-SYP': {
-            'stationName': locales[lang]['saiYingPun'],
+            'stationName': getValue(lang, 'saiYingPun'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'SYP',
             'upboundDestination1': 'ISL-CHW',
@@ -981,7 +992,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.142706449664'
           },
           'ISL-SHW': {
-            'stationName': locales[lang]['sheungWan'],
+            'stationName': getValue(lang, 'sheungWan'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'SHW',
             'upboundDestination1': 'ISL-CHW',
@@ -992,7 +1003,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.151854526066'
           },
           'ISL-CEN': {
-            'stationName': locales[lang]['central'],
+            'stationName': getValue(lang, 'central'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'CEN',
             'upboundDestination1': 'ISL-CHW',
@@ -1003,7 +1014,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.158396214877'
           },
           'ISL-ADM': {
-            'stationName': locales[lang]['admiralty'],
+            'stationName': getValue(lang, 'admiralty'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'ADM',
             'upboundDestination1': 'ISL-CHW',
@@ -1014,7 +1025,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.163925544473'
           },
           'ISL-WAC': {
-            'stationName': locales[lang]['wanChai'],
+            'stationName': getValue(lang, 'wanChai'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'WAC',
             'upboundDestination1': 'ISL-CHW',
@@ -1025,7 +1036,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.17313919004'
           },
           'ISL-CAB': {
-            'stationName': locales[lang]['causewayBay'],
+            'stationName': getValue(lang, 'causewayBay'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'CAB',
             'upboundDestination1': 'ISL-CHW',
@@ -1036,7 +1047,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.185042993982'
           },
           'ISL-TIH': {
-            'stationName': locales[lang]['tinHau'],
+            'stationName': getValue(lang, 'tinHau'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'TIH',
             'upboundDestination1': 'ISL-CHW',
@@ -1047,7 +1058,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.191703407994'
           },
           'ISL-FOH': {
-            'stationName': locales[lang]['fortressHill'],
+            'stationName': getValue(lang, 'fortressHill'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'FOH',
             'upboundDestination1': 'ISL-CHW',
@@ -1058,7 +1069,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.193609903126'
           },
           'ISL-NOP': {
-            'stationName': locales[lang]['northPoint'],
+            'stationName': getValue(lang, 'northPoint'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'NOP',
             'upboundDestination1': 'ISL-CHW',
@@ -1069,7 +1080,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.200535073062'
           },
           'ISL-QUB': {
-            'stationName': locales[lang]['quarryBay'],
+            'stationName': getValue(lang, 'quarryBay'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'QUB',
             'upboundDestination1': 'ISL-CHW',
@@ -1080,7 +1091,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.209647836531'
           },
           'ISL-TAK': {
-            'stationName': locales[lang]['taiKoo'],
+            'stationName': getValue(lang, 'taiKoo'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'TAK',
             'upboundDestination1': 'ISL-CHW',
@@ -1091,7 +1102,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.216346755952'
           },
           'ISL-SWH': {
-            'stationName': locales[lang]['saiWanHo'],
+            'stationName': getValue(lang, 'saiWanHo'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'SWH',
             'upboundDestination1': 'ISL-CHW',
@@ -1102,7 +1113,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.221897815521'
           },
           'ISL-SKW': {
-            'stationName': locales[lang]['shauKeiWan'],
+            'stationName': getValue(lang, 'shauKeiWan'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'SKW',
             'upboundDestination1': 'ISL-CHW',
@@ -1113,7 +1124,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.228887149359'
           },
           'ISL-HFC': {
-            'stationName': locales[lang]['hengFaChuen'],
+            'stationName': getValue(lang, 'hengFaChuen'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'HFC',
             'upboundDestination1': 'ISL-CHW',
@@ -1124,7 +1135,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.239893734162'
           },
           'ISL-CHW': {
-            'stationName': locales[lang]['chaiWan'],
+            'stationName': getValue(lang, 'chaiWan'),
             'trainLineCode': 'ISL',
             'trainStationCode': 'CHW',
             'upboundDestination1': '',
@@ -1135,7 +1146,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.237117546124'
           },
           'KTL-WHA': {
-            'stationName': locales[lang]['whampoa'],
+            'stationName': getValue(lang, 'whampoa'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'WHA',
             'upboundDestination1': 'KTL-TIK',
@@ -1146,7 +1157,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.189578761481'
           },
           'KTL-HOM': {
-            'stationName': locales[lang]['hoManTin'],
+            'stationName': getValue(lang, 'hoManTin'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'HOM',
             'upboundDestination1': 'KTL-TIK',
@@ -1157,7 +1168,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.183027473692'
           },
           'KTL-YMT': {
-            'stationName': locales[lang]['yauMaTei'],
+            'stationName': getValue(lang, 'yauMaTei'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'YMT',
             'upboundDestination1': 'KTL-TIK',
@@ -1168,7 +1179,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.170658315102'
           },
           'KTL-MOK': {
-            'stationName': locales[lang]['mongKok'],
+            'stationName': getValue(lang, 'mongKok'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'MOK',
             'upboundDestination1': 'KTL-TIK',
@@ -1179,7 +1190,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.169614111681'
           },
           'KTL-PRE': {
-            'stationName': locales[lang]['princeEdward'],
+            'stationName': getValue(lang, 'princeEdward'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'PRE',
             'upboundDestination1': 'KTL-TIK',
@@ -1190,7 +1201,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.168569191642'
           },
           'KTL-SKM': {
-            'stationName': locales[lang]['shekKipMei'],
+            'stationName': getValue(lang, 'shekKipMei'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'SKM',
             'upboundDestination1': 'KTL-TIK',
@@ -1201,7 +1212,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.16878915954'
           },
           'KTL-KOT': {
-            'stationName': locales[lang]['kowloonTong'],
+            'stationName': getValue(lang, 'kowloonTong'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'KOT',
             'upboundDestination1': 'KTL-TIK',
@@ -1212,7 +1223,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.17597509402'
           },
           'KTL-LOF': {
-            'stationName': locales[lang]['lokFu'],
+            'stationName': getValue(lang, 'lokFu'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'LOF',
             'upboundDestination1': 'KTL-TIK',
@@ -1223,7 +1234,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.186996597152'
           },
           'KTL-WTS': {
-            'stationName': locales[lang]['wongTaiSin'],
+            'stationName': getValue(lang, 'wongTaiSin'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'WTS',
             'upboundDestination1': 'KTL-TIK',
@@ -1234,7 +1245,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.193842949232'
           },
           'KTL-DIH': {
-            'stationName': locales[lang]['diamondHill'],
+            'stationName': getValue(lang, 'diamondHill'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'DIH',
             'upboundDestination1': 'KTL-TIK',
@@ -1245,7 +1256,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.200717479649'
           },
           'KTL-CHH': {
-            'stationName': locales[lang]['choiHung'],
+            'stationName': getValue(lang, 'choiHung'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'CHH',
             'upboundDestination1': 'KTL-TIK',
@@ -1256,7 +1267,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.209008992431'
           },
           'KTL-KOB': {
-            'stationName': locales[lang]['kowloonBay'],
+            'stationName': getValue(lang, 'kowloonBay'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'KOB',
             'upboundDestination1': 'KTL-TIK',
@@ -1267,7 +1278,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.213970498784'
           },
           'KTL-NTK': {
-            'stationName': locales[lang]['ngauTauKok'],
+            'stationName': getValue(lang, 'ngauTauKok'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'NTK',
             'upboundDestination1': 'KTL-TIK',
@@ -1278,7 +1289,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.218970026531'
           },
           'KTL-KWT': {
-            'stationName': locales[lang]['kwunTong'],
+            'stationName': getValue(lang, 'kwunTong'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'KWT',
             'upboundDestination1': 'KTL-TIK',
@@ -1289,7 +1300,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.226341247647'
           },
           'KTL-LAT': {
-            'stationName': locales[lang]['lamTin'],
+            'stationName': getValue(lang, 'lamTin'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'LAT',
             'upboundDestination1': 'KTL-TIK',
@@ -1300,7 +1311,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.232708675981'
           },
           'KTL-YAT': {
-            'stationName': locales[lang]['yauTong'],
+            'stationName': getValue(lang, 'yauTong'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'YAT',
             'upboundDestination1': 'KTL-TIK',
@@ -1311,7 +1322,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.236750284413'
           },
           'KTL-TIK': {
-            'stationName': locales[lang]['tiuKengLeng'],
+            'stationName': getValue(lang, 'tiuKengLeng'),
             'trainLineCode': 'KTL',
             'trainStationCode': 'TIK',
             'upboundDestination1': '',
@@ -1322,7 +1333,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.252818646542'
           },
           'DRL-SUN': {
-            'stationName': locales[lang]['sunnyBay'],
+            'stationName': getValue(lang, 'sunnyBay'),
             'trainLineCode': 'DRL',
             'trainStationCode': 'SUN',
             'upboundDestination1': '',
@@ -1333,7 +1344,7 @@ export function trainStationMap(lang: Language): Record<string, Record<string, s
             'longitude': '114.028954989544'
           },
           'DRL-DIS': {
-            'stationName': locales[lang]['disneylandResort'],
+            'stationName': getValue(lang, 'disneylandResort'),
             'trainLineCode': 'DRL',
             'trainStationCode': 'DIS',
             'upboundDestination1': 'DRL-SUN',

@@ -50,6 +50,7 @@ app.use(express_1.default.json());
 dotenv_1.default.config();
 const jobDicts = {};
 const lastTrainTime = {};
+const lastTrainNo = {};
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 const serviceAccountBuffer = Buffer.from(serviceAccountBase64, 'base64');
 const serviceAccount = JSON.parse(serviceAccountBuffer.toString('utf8'));
@@ -100,7 +101,7 @@ function getIntervalWaitingTime(trainData, type) {
     const waitingTimeSeconds = waitingTimeMs / 1000;
     return waitingTimeSeconds;
 }
-function getWaitingTime(waitingTimeSeconds) {
+function getWaitingTime(waitingTimeSeconds, lang) {
     if (waitingTimeSeconds <= 0) {
         return "trainDeparting";
     }
@@ -109,7 +110,8 @@ function getWaitingTime(waitingTimeSeconds) {
     }
     else {
         const minutes = Math.floor(waitingTimeSeconds / 60);
-        return `${minutes} ${"minutes"}`;
+        let unit = (0, trainStationMap_1.getValue)(lang, 'minutes');
+        return `${minutes} ${unit}`;
     }
 }
 function sendActivityNotification(url, userData, event, content, trainLineCode, trainStationCode, type, lang) {
@@ -118,8 +120,17 @@ function sendActivityNotification(url, userData, event, content, trainLineCode, 
         return;
     }
     const waitingIntervalTime = getIntervalWaitingTime(trainData, type);
-    const estimatedWaitingTime = getWaitingTime(waitingIntervalTime);
+    const estimatedWaitingTime = getWaitingTime(waitingIntervalTime, lang);
     const timestamp = Math.floor(Date.now() / 1000);
+    const trainNo = type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat;
+    if (lastTrainTime[userData.userId] == null) {
+        lastTrainTime[userData.userId] = content.curr_time;
+    }
+    const trainCode = `${trainNo}-${trainData.UP[0].seq}-${trainData.UP[0].ttnt}-${trainLineCode}-${trainStationCode}`;
+    if (lastTrainNo[userData.userId] != trainCode) {
+        lastTrainTime[userData.userId] = content.curr_time;
+        lastTrainNo[userData.userId] = trainCode;
+    }
     if (waitingIntervalTime <= 0) {
         const trainInfo = type == 'UP' ? trainData.UP : trainData.DOWN;
         lastTrainTime[userData.userId] = trainInfo[0]?.time;
@@ -155,7 +166,7 @@ function sendActivityNotification(url, userData, event, content, trainLineCode, 
                 'content-state': {
                     'estimatedWaitingTime': estimatedWaitingTime,
                     'currentTime': content.curr_time,
-                    'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
+                    'trainNo': trainNo,
                     'waitingIntervalTime': waitingIntervalTime,
                     'startTime': lastTrainTime[userData.userId] ?? content.curr_time,
                     'stationName': `${(0, trainStationMap_1.trainStationMap)(lang)[`${trainLineCode}-${trainStationCode}`]?.stationName ?? ''}`,
