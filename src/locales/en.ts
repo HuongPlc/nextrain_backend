@@ -1,4 +1,5 @@
 const en = {
+    minutes: 'minutes',
     hongKong: 'Hong Kong',
     kowloon: 'Kowloon',
     tsingYi: 'Tsing Yi',

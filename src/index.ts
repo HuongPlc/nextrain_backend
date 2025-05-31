@@ -5,7 +5,7 @@ import http2 from "http2";
 import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
 import axios from 'axios';
-import { Language, trainStationMap } from './trainStationMap';
+import { Language, trainStationMap, getValue } from './trainStationMap';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +14,7 @@ dotenv.config();
 
 const jobDicts: Record<string, CronJob> = {};
 const lastTrainTime: Record<string, string> = {};
+const lastTrainNo: Record<string, string> = {};
 
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 const serviceAccountBuffer = Buffer.from(serviceAccountBase64!, 'base64');
@@ -66,7 +67,6 @@ function generateJwtToken() {
             console.error('Request failed:', error);
             throw error;
           }
-
 }
 
 function getIntervalWaitingTime(trainData: any, type: string): number {
@@ -78,14 +78,15 @@ function getIntervalWaitingTime(trainData: any, type: string): number {
     return waitingTimeSeconds;
 }
 
-function getWaitingTime(waitingTimeSeconds: number): string {
+function getWaitingTime(waitingTimeSeconds: number, lang: Language): string {
     if (waitingTimeSeconds <= 0) {
       return "trainDeparting";
     } else if (waitingTimeSeconds > 0 && waitingTimeSeconds < 60) {
       return "trainArriving";
     } else {
       const minutes = Math.floor(waitingTimeSeconds / 60);
-      return `${minutes} ${"minutes"}`;
+      let unit = getValue(lang, 'minutes');
+      return `${minutes} ${unit}`;
     }
   }
 
@@ -97,8 +98,19 @@ function sendActivityNotification(url: string, userData: any, event: string, con
     }
 
     const waitingIntervalTime = getIntervalWaitingTime(trainData, type);
-    const estimatedWaitingTime = getWaitingTime(waitingIntervalTime);
+    const estimatedWaitingTime = getWaitingTime(waitingIntervalTime, lang);
     const timestamp = Math.floor(Date.now() / 1000);
+    const trainNo = type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat;
+
+    if (lastTrainTime[userData.userId] == null) {
+        lastTrainTime[userData.userId] = content.curr_time
+    }
+
+    const trainCode = `${trainNo}-${trainData.UP[0].seq}-${trainData.UP[0].ttnt}-${trainLineCode}-${trainStationCode}`
+    if (lastTrainNo[userData.userId] != trainCode) {
+        lastTrainTime[userData.userId] = content.curr_time;
+        lastTrainNo[userData.userId] = trainCode;
+    }
 
     if (waitingIntervalTime <= 0) {
         const trainInfo = type == 'UP' ? trainData.UP : trainData.DOWN;
@@ -137,7 +149,7 @@ function sendActivityNotification(url: string, userData: any, event: string, con
                 'content-state': {
                     'estimatedWaitingTime': estimatedWaitingTime,
                     'currentTime': content.curr_time,
-                    'trainNo': type == 'UP' ? trainData.UP[0].plat : trainData.DOWN[0].plat,
+                    'trainNo': trainNo,
                     'waitingIntervalTime': waitingIntervalTime,
                     'startTime': lastTrainTime[userData.userId] ?? content.curr_time,
                     'stationName': `${trainStationMap(lang)[`${trainLineCode}-${trainStationCode}`]?.stationName ?? ''}`,

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const zh_tw = {
+    minutes: '分鐘',
     hongKong: '香港',
     kowloon: '九龍',
     tsingYi: '青衣',
